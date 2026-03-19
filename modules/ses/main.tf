@@ -33,7 +33,31 @@ resource "aws_route53_record" "dkim" {
   records = ["${aws_ses_domain_dkim.main.dkim_tokens[count.index]}.dkim.amazonses.com"]
 }
 
-# SPF record for email authentication
+# Custom MAIL FROM domain (aligns envelope sender with From header)
+resource "aws_ses_domain_mail_from" "main" {
+  domain           = aws_ses_domain_identity.main.domain
+  mail_from_domain = "mail.${var.domain_name}"
+}
+
+# MX record for custom MAIL FROM
+resource "aws_route53_record" "ses_mail_from_mx" {
+  zone_id = var.zone_id
+  name    = "mail.${var.domain_name}"
+  type    = "MX"
+  ttl     = 600
+  records = ["10 feedback-smtp.us-east-1.amazonses.com"]
+}
+
+# SPF record for custom MAIL FROM subdomain
+resource "aws_route53_record" "ses_mail_from_spf" {
+  zone_id = var.zone_id
+  name    = "mail.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
+# SPF record for root domain
 resource "aws_route53_record" "spf" {
   zone_id = var.zone_id
   name    = var.domain_name
