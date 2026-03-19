@@ -1,0 +1,5 @@
+aws_region    = "us-east-1"
+project_name  = "hoopsmgr"
+instance_type = "t3.micro"
+key_name      = "laptop_key"
+domain_name   = "hoopsmanager.com"
