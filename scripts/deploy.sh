@@ -57,6 +57,12 @@ except:
 done
 docker exec hoopsmgr-web python manage.py migrate --noinput
 
+# Restart Alloy so its loki.source.docker tailer drops stale handles
+# from the just-recreated containers and picks up the new container
+# IDs. Without this, log shipping stops on every deploy and Grafana
+# fires a "Nginx Container Down" NoData alert.
+sudo systemctl restart alloy.service
+
 echo "==> Deployment complete!"
 docker compose ps
 ENDSSH
