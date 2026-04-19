@@ -26,3 +26,15 @@ variable "domain_name" {
   type        = string
   default     = "hoopsmanager.com"
 }
+
+variable "grafana_url" {
+  description = "Grafana Cloud stack URL"
+  type        = string
+  default     = "https://hoopmgr.grafana.net"
+}
+
+variable "notification_email" {
+  description = "Email for Grafana alert notifications"
+  type        = string
+  default     = "crawdaddy115@gmail.com"
+}

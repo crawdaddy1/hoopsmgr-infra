@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 3.0"
+    }
   }
 
   backend "s3" {
@@ -58,4 +62,22 @@ module "ses" {
 
   domain_name = var.domain_name
   zone_id     = module.dns.zone_id
+}
+
+# ─── Grafana Cloud (dashboards, alerts) ────────────────────────
+data "aws_secretsmanager_secret_version" "grafana_api_key" {
+  secret_id = "hoopsmgr/grafana-cloud-api-key"
+}
+
+provider "grafana" {
+  url  = var.grafana_url
+  auth = data.aws_secretsmanager_secret_version.grafana_api_key.secret_string
+}
+
+module "grafana" {
+  source = "./modules/grafana"
+
+  grafana_url        = var.grafana_url
+  grafana_api_key    = data.aws_secretsmanager_secret_version.grafana_api_key.secret_string
+  notification_email = var.notification_email
 }
