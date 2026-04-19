@@ -32,3 +32,8 @@ output "ssh_security_group_id" {
   description = "SSH security group ID (used by ssh-toggle script)"
   value       = module.ec2.ssh_security_group_id
 }
+
+output "data_volume_id" {
+  description = "Persistent data EBS volume ID. Snapshot before AMI rotations or risky ops."
+  value       = module.ec2.data_volume_id
+}

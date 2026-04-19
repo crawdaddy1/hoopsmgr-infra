@@ -58,10 +58,12 @@ resource "aws_iam_instance_profile" "ec2" {
 }
 
 # AMI is pinned via var.ec2_ami_id to prevent surprise instance
-# replacement when AWS publishes a new Amazon Linux release. Rotating
-# the AMI will destroy the EC2's root EBS — which holds the MySQL
-# Docker volume — so bumping the pin should be a deliberate, planned
-# change with a data migration.
+# replacement when AWS publishes a new Amazon Linux release. Persistent
+# data (MySQL, Let's Encrypt certs, media) lives on aws_ebs_volume.data
+# mounted at /mnt/data, so rotating the AMI replaces the instance but
+# preserves the data volume. The attachment uses skip_destroy so
+# Terraform won't try to detach the live volume while tearing down the
+# old instance — AWS detaches automatically on instance termination.
 
 # Security group - allow HTTP, HTTPS only (no SSH by default)
 resource "aws_security_group" "web" {
@@ -139,11 +141,44 @@ resource "aws_instance" "web" {
   }
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    domain_name = var.domain_name
-    aws_region  = var.aws_region
+    domain_name      = var.domain_name
+    aws_region       = var.aws_region
+    data_device      = "/dev/sdf"
+    data_nvme_device = "/dev/nvme1n1"
+    data_mount_point = "/mnt/data"
   })
 
   tags = {
     Name = "${var.project_name}-web"
   }
+}
+
+# Persistent data volume — survives instance replacement so AMI rotations
+# are safe. Holds MySQL data, Let's Encrypt certs, and Django media via
+# bind mounts from /mnt/data in docker-compose.prod.yml.
+resource "aws_ebs_volume" "data" {
+  availability_zone = aws_instance.web.availability_zone
+  size              = var.data_volume_size_gb
+  type              = "gp3"
+  encrypted         = true
+
+  tags = {
+    Name = "${var.project_name}-data"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_volume_attachment" "data" {
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.data.id
+  instance_id = aws_instance.web.id
+
+  # On instance replacement (e.g. AMI rotation), Terraform would normally
+  # try to detach the volume before destroying the old instance. AWS
+  # detaches automatically when an instance terminates, so skip the
+  # explicit detach — avoids races and unnecessary API calls.
+  skip_destroy = true
 }
