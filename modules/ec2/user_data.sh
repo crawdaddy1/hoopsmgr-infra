@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-# Install Docker and Git
+# Install Docker, Git, and rsync (rsync is needed for any data copies
+# into/out of /mnt/data during maintenance; Amazon Linux 2023 does not
+# ship it by default).
 dnf update -y
-dnf install -y docker git
+dnf install -y docker git rsync
 systemctl enable docker
 systemctl start docker
 
