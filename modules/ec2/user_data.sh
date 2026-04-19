@@ -7,6 +7,15 @@ dnf install -y docker git
 systemctl enable docker
 systemctl start docker
 
+# Disable the Amazon ECS container agent. The AL2023 ECS-optimized AMI
+# ships with ecs.service enabled, which endlessly crash-loops a spare
+# ecs-agent container on non-ECS hosts. The churning ephemeral container
+# IDs confuse Alloy's loki.source.docker tailer, causing it to chase
+# dead handles instead of the stable hoopsmgr-* containers and stop
+# shipping nginx/web logs. `|| true` keeps user_data idempotent on AMIs
+# where ecs.service isn't present.
+systemctl disable --now ecs.service 2>/dev/null || true
+
 # Install Docker Compose
 DOCKER_CONFIG=/usr/local/lib/docker/cli-plugins
 mkdir -p $DOCKER_CONFIG
