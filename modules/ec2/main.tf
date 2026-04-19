@@ -5,8 +5,8 @@ resource "aws_iam_role" "ec2" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
     }]
   })
@@ -57,21 +57,11 @@ resource "aws_iam_instance_profile" "ec2" {
   role = aws_iam_role.ec2.name
 }
 
-# Get latest Amazon Linux 2023 AMI (free tier eligible)
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
+# AMI is pinned via var.ec2_ami_id to prevent surprise instance
+# replacement when AWS publishes a new Amazon Linux release. Rotating
+# the AMI will destroy the EC2's root EBS — which holds the MySQL
+# Docker volume — so bumping the pin should be a deliberate, planned
+# change with a data migration.
 
 # Security group - allow HTTP, HTTPS only (no SSH by default)
 resource "aws_security_group" "web" {
@@ -136,7 +126,7 @@ resource "aws_eip" "web" {
 
 # EC2 instance - t3.micro free tier
 resource "aws_instance" "web" {
-  ami                    = data.aws_ami.amazon_linux.id
+  ami                    = var.ec2_ami_id
   instance_type          = var.instance_type
   key_name               = var.key_name
   subnet_id              = var.public_subnet_id
@@ -144,7 +134,7 @@ resource "aws_instance" "web" {
   iam_instance_profile   = aws_iam_instance_profile.ec2.name
 
   root_block_device {
-    volume_size = 30  # 30 GB free tier
+    volume_size = 30 # 30 GB free tier
     volume_type = "gp3"
   }
 
