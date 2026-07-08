@@ -59,13 +59,27 @@ if [ -n "$DATA_DEVICE" ]; then
     echo "UUID=$DATA_UUID ${data_mount_point} ext4 defaults,nofail 0 2" >> /etc/fstab
   fi
   mount -a
-  mkdir -p ${data_mount_point}/mysql ${data_mount_point}/letsencrypt ${data_mount_point}/media
+  mkdir -p ${data_mount_point}/mysql \
+           ${data_mount_point}/letsencrypt \
+           ${data_mount_point}/media \
+           ${data_mount_point}/webroot
 else
   echo "WARNING: data volume not found at ${data_nvme_device} or ${data_device}" >&2
 fi
 
 # Install certbot for free SSL via Let's Encrypt
 dnf install -y certbot
+
+# Certbot renewal cron. Runs twice daily (12h + 30-day-window Let's Encrypt
+# best practice). Every certbot invocation in this project points at
+# /mnt/data/letsencrypt as its config dir so certs live on the persistent
+# EBS volume — and the same command works whether the instance is fresh
+# from user_data or has been running for weeks. `--deploy-hook` reloads
+# nginx inside the running react container on any successful renewal, so
+# the new cert is picked up without any manual step.
+cat > /etc/cron.d/certbot-renew << 'CRON'
+0 3,15 * * * root certbot renew --quiet --config-dir /mnt/data/letsencrypt --work-dir /var/lib/letsencrypt --logs-dir /var/log/letsencrypt --deploy-hook 'docker exec hoopsmgr-react nginx -s reload'
+CRON
 
 # Install AWS CLI for ECR login
 dnf install -y aws-cli
