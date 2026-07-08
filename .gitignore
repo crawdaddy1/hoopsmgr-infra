@@ -12,5 +12,11 @@ terraform.tfvars
 # OS
 .DS_Store
 
+# IDE
+.idea/
+
 # Claude
 .claude/
+
+# Stray terraform plan output (note: *.tfplan above doesn't match this name)
+tf.plan
