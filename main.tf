@@ -41,13 +41,14 @@ module "ecr" {
 module "ec2" {
   source = "./modules/ec2"
 
-  project_name      = var.project_name
-  vpc_id            = module.networking.vpc_id
-  public_subnet_id  = module.networking.public_subnet_id
-  instance_type     = var.instance_type
-  key_name          = var.key_name
-  domain_name       = var.domain_name
-  aws_region        = var.aws_region
+  project_name     = var.project_name
+  vpc_id           = module.networking.vpc_id
+  public_subnet_id = module.networking.public_subnet_id
+  instance_type    = var.instance_type
+  key_name         = var.key_name
+  domain_name      = var.domain_name
+  aws_region       = var.aws_region
+  ec2_ami_id       = var.ec2_ami_id
 }
 
 module "dns" {

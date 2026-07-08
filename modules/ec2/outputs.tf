@@ -14,3 +14,8 @@ output "data_volume_id" {
   value       = aws_ebs_volume.data.id
   description = "Persistent data EBS volume ID. Snapshot this before risky operations."
 }
+
+output "ami_id" {
+  value       = aws_instance.web.ami
+  description = "AMI ID currently in use by the running instance."
+}

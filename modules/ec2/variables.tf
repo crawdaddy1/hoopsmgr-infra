@@ -27,9 +27,8 @@ variable "aws_region" {
 }
 
 variable "ec2_ami_id" {
-  description = "AMI ID for the web EC2. Pinned to avoid surprise replacements when AWS publishes new Amazon Linux releases. Persistent data lives on aws_ebs_volume.data, so rotating this value safely replaces the instance without losing MySQL / certs / media."
+  description = "AMI ID for the web EC2. Set at the root level; see variables.tf at repo root for the pinning rationale and rotation flow."
   type        = string
-  default     = "ami-0fc6cf99992956a4a"
 }
 
 variable "data_volume_size_gb" {

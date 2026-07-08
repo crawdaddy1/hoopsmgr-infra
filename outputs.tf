@@ -37,3 +37,13 @@ output "data_volume_id" {
   description = "Persistent data EBS volume ID. Snapshot before AMI rotations or risky ops."
   value       = module.ec2.data_volume_id
 }
+
+output "current_ami_id" {
+  description = "AMI ID the running EC2 instance is using. Compare with `latest_al2023_ami` to decide whether to rotate."
+  value       = module.ec2.ami_id
+}
+
+output "latest_al2023_ami" {
+  description = "Latest Amazon Linux 2023 x86_64 AMI published by AWS (resolved live from SSM). Used by scripts/rotate-ami.sh to detect when a security/patch refresh is available."
+  value       = data.aws_ssm_parameter.al2023_latest.value
+}

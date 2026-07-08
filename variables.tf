@@ -16,6 +16,12 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+variable "ec2_ami_id" {
+  description = "AMI for the web EC2. Pinned (not resolved live) so routine `terraform apply` runs don't surprise-replace the instance when AWS publishes a new AL2023 release. Persistent state lives on aws_ebs_volume.data, so deliberate rotation via scripts/rotate-ami.sh is data-safe. Compare against output `latest_al2023_ami` to see when a refresh is available."
+  type        = string
+  default     = "ami-0fc6cf99992956a4a"
+}
+
 variable "key_name" {
   description = "Name of the SSH key pair to use for EC2 access"
   type        = string
